@@ -8,3 +8,5 @@ Encoding primitives for Dream applications.
 
 - [ ] Add unit tests
 - [ ] Write README
+- [ ] Support compression with multiple algorithms
+- [ ] Support Brotli compression (see https://github.com/mirage/decompress/issues/101)
