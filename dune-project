@@ -17,8 +17,8 @@
 
 (package
  (name dream-encoding)
- (synopsis "Live reloading for Dream applications")
- (description "Live reloading for Dream applications")
+ (synopsis "Encoding primitives for Dream.")
+ (description "Encoding primitives for Dream.")
  (depends
   (ocaml
    (>= 4.08.0))
