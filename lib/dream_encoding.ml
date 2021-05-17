@@ -108,17 +108,7 @@ let encoding_of_string = function
   | s ->
     `Unknown s
 
-let accept_encoding request =
-  match Dream.header "accept-encoding" request with
-  | None ->
-    None
-  | Some s ->
-    String.split_on_char ',' s
-    |> List.map (fun x -> x |> String.trim |> String.lowercase_ascii)
-    |> List.map encoding_of_string
-    |> Option.some
-
-let content_encoding request =
+let content_encodings request =
   match Dream.header "content-encoding" request with
   | None ->
     None
@@ -128,19 +118,53 @@ let content_encoding request =
     |> List.map encoding_of_string
     |> Option.some
 
+let accepted_encodings_with_weights request =
+  match Dream.header "accept-encoding" request with
+  | None ->
+    None
+  | Some s ->
+    let encodings = Accept.encodings (Some s) |> Accept.qsort in
+    Some
+      (List.map
+         (fun (a, b) ->
+           ( (match b with
+             | Accept.Any ->
+               `Any
+             | Accept.Gzip ->
+               `Gzip
+             | Accept.Compress ->
+               `Compress
+             | Accept.Deflate ->
+               `Deflate
+             | Accept.Identity ->
+               `Identity
+             | Accept.Encoding s ->
+               `Unknown s)
+           , a ))
+         encodings)
+
+let accepted_encodings request =
+  match accepted_encodings_with_weights request with
+  | None ->
+    None
+  | Some encodings ->
+    Some (List.map (fun (a, _) -> a) encodings)
+
 let preferred_content_encoding request =
-  match accept_encoding request with
+  match accepted_encodings request with
   | None ->
     None
   | Some l ->
     let rec aux = function
       | [] ->
         None
+      | `Any :: _rest ->
+        Some `Gzip
       | `Deflate :: _rest ->
         Some `Deflate
       | `Gzip :: _rest ->
         Some `Gzip
-      | `Unknown _ :: rest ->
+      | _ :: rest ->
         aux rest
     in
     aux l
@@ -183,12 +207,12 @@ let decompress handler req =
     match algorithms with
     | [] ->
       Ok content
-    | `Unknown _ :: _rest ->
-      Error (`Msg "Unsopported encoding directive")
     | (`Deflate as el) :: rest | (`Gzip as el) :: rest ->
       Result.bind (inflate_string ~algorithm:el content) (aux rest)
+    | _ :: _rest ->
+      Error (`Msg "Unsopported encoding directive")
   in
-  let algorithms = content_encoding req in
+  let algorithms = content_encodings req in
   match algorithms with
   | None ->
     handler req

@@ -49,18 +49,31 @@ val with_encoded_body
 
     [algorithm] defaults to [`Deflate]. *)
 
-val accept_encoding
+val accepted_encodings
   :  'a Dream.message
-  -> [ `Deflate | `Gzip | `Unknown of string ] list option
+  -> [ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
+     list
+     option
 (** Retrieve the list of accepted encoding directives from the [Accept-Encoding]
-    header.
+    header, ordered by quality weight in decreasing order.
 
     If the request does not have an [Accept-Encoding] header, this returns
     [None]. *)
 
-val content_encoding
+val accepted_encodings_with_weights
   :  'a Dream.message
-  -> [ `Deflate | `Gzip | `Unknown of string ] list option
+  -> ([ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
+     * int)
+     list
+     option
+(** Same as [accepted_encoding], but returns the quality weights associated to
+    the encoding directive. *)
+
+val content_encodings
+  :  'a Dream.message
+  -> [ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
+     list
+     option
 (** Retrieve the list of content encoding directives from the [Content-Encoding]
     header.
 
@@ -71,7 +84,10 @@ val preferred_content_encoding : 'a Dream.message -> [ `Deflate | `Gzip ] option
 (** Retrieve preferred encoding directive from the [Accept-Encoding].
 
     The preferred encoding directive is the first supported algorithm in the
-    list of accepted directives.
+    list of accepted directives sorted by quality weight.
+
+    If [*] is given as the preferred encoding, [`Gzip] is returned. This is to
+    be on par with the behavior of [compress].
 
     If no algorithm is supported, or if the request does not have an
     [Accept-Encoding] header, this returns [None]. *)
