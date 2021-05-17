@@ -25,7 +25,8 @@ val with_encoded_body
   -> Dream.response
   -> Dream.response
 (** [with_encoded_body ?algorithm body response] replaces the body of the
-    response with [body] compressed with [algorithm].
+    response with [body] compressed with [algorithm] and adds the corresponding
+    [Content-Encoding] header.
 
     [algorithm] defaults to [`Deflate]. *)
 
