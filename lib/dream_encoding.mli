@@ -30,7 +30,7 @@ val with_encoded_body
     [algorithm] defaults to [`Deflate]. *)
 
 val accept_encoding
-  :  Dream.request
+  :  'a Dream.message
   -> [ `Deflate | `Gzip | `Unknown of string ] list option
 (** Retrieve the list of accepted encoding directives from the [Accept-Encoding]
     header.
@@ -38,7 +38,16 @@ val accept_encoding
     If the request does not have an [Accept-Encoding] header, this returns
     [None]. *)
 
-val preferred_content_encoding : Dream.request -> [ `Deflate | `Gzip ] option
+val content_encoding
+  :  'a Dream.message
+  -> [ `Deflate | `Gzip | `Unknown of string ] list option
+(** Retrieve the list of content encoding directives from the [Content-Encoding]
+    header.
+
+    If the request does not have an [Content-Encoding] header, this returns
+    [None]. *)
+
+val preferred_content_encoding : 'a Dream.message -> [ `Deflate | `Gzip ] option
 (** Retrieve preferred encoding directive from the [Accept-Encoding].
 
     The preferred encoding directive is the first supported algorithm in the
