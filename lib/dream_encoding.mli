@@ -1,5 +1,24 @@
 (** Encoding primitives for Dream.
 
+    The main use case for this library is to compress the response body of a
+    given list of endpoints. To do this, you can simply add
+    [Dream_encoding.compress] to your list of middlewares:
+
+    {[
+      let () =
+        Dream.run
+        @@ Dream.logger
+        @@ Dream_encoding.compress
+        @@ Dream.router [ Dream.get "/" (fun _ -> Dream.html "Hello World!") ]
+        @@ Dream.not_found
+    ]}
+
+    For more advanced use cases, some utility functions are also exposed. In
+    particular, functions to retrieve the [Content-Encoding] and
+    [Accept-Encoding] headers (respectively, [content_encoding] and
+    [accept_encoding]), as well as [with_encoded_body], a function to compress
+    the body of a response.
+
     As of now, the supported encoding directives are [deflate] and [gzip]. More
     directive will be supported when their support land in [decompress], the
     underlying compression library used by Dream_encoding. *)
