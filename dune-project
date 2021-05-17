@@ -24,4 +24,6 @@
    (>= 4.08.0))
   dune
   dream
+  (decompress
+   (>= 1.4.1))
   (odoc :with-doc)))
