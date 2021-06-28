@@ -19,7 +19,7 @@ let () =
 
 The middleware will parse the `Accept-Encoding` header from the requests and compress the responses accordingly.
 
-The library API also includes other lower-level functions for convenience, and are documented [here](lib/dream_encoding.mli).
+The library API also includes other lower-level functions for convenience, and are documented [here](https://tmattio.github.io/dream-encoding/dream-encoding/Dream_encoding/index.html).
 
 ## Limitation
 
