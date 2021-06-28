@@ -17,7 +17,7 @@
 
 (package
  (name dream-encoding)
- (synopsis "Encoding primitives for Dream.")
+ (synopsis "Encoding primitives for Dream")
  (description "Encoding primitives for Dream.")
  (depends
   (ocaml
