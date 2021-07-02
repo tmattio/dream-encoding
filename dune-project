@@ -1,4 +1,4 @@
-(lang dune 2.0)
+(lang dune 2.7)
 
 (name dream-encoding)
 
@@ -26,4 +26,5 @@
   dream
   (decompress
    (>= 1.4.1))
+  lwt_ppx
   (odoc :with-doc)))
