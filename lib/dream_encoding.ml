@@ -109,7 +109,7 @@ let encoding_of_string = function
     `Unknown s
 
 let content_encodings request =
-  match Dream.header "content-encoding" request with
+  match Dream.header request "content-encoding" with
   | None ->
     None
   | Some s ->
@@ -119,7 +119,7 @@ let content_encodings request =
     |> Option.some
 
 let accepted_encodings_with_weights request =
-  match Dream.header "accept-encoding" request with
+  match Dream.header request "accept-encoding" with
   | None ->
     None
   | Some s ->
@@ -177,9 +177,9 @@ let with_encoded_body ?(algorithm = `Deflate) body response =
     response
   | _ ->
     let encoded_body = deflate_string ~algorithm body in
+    Dream.set_body response encoded_body;
+    Dream.set_header response "Content-Encoding" (algorithm_to_string algorithm);
     response
-    |> Dream.with_body encoded_body
-    |> Dream.with_header "Content-Encoding" (algorithm_to_string algorithm)
 
 let compress handler req =
   let%lwt response = handler req in
@@ -193,14 +193,6 @@ let compress handler req =
       (algorithm_to_string algorithm);
     let%lwt body = Dream.body response in
     Lwt.return @@ with_encoded_body ~algorithm body response
-
-let request_with_body body request =
-  let client = Dream.client request in
-  let method_ = Dream.method_ request in
-  let target = Dream.target request in
-  let version = Dream.version request in
-  let headers = Dream.all_headers request in
-  Dream.request ~client ~method_ ~target ~version ~headers body
 
 let decompress handler req =
   let rec aux algorithms content =
@@ -221,7 +213,7 @@ let decompress handler req =
     let body = aux algorithms body in
     (match body with
     | Ok body ->
-      let req = request_with_body body req in
+      Dream.set_body req body;
       handler req
     | Error (`Msg err) ->
       Dream.respond ~status:`Unsupported_Media_Type err)
