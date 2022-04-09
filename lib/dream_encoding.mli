@@ -6,9 +6,7 @@
 
     {[
       let () =
-        Dream.run
-        @@ Dream.logger
-        @@ Dream_encoding.compress
+        Dream.run @@ Dream.logger @@ Dream_encoding.compress
         @@ Dream.router [ Dream.get "/" (fun _ -> Dream.html "Hello World!") ]
         @@ Dream.not_found
     ]}
@@ -38,42 +36,37 @@ val decompress : Dream.middleware
     practice. See [compress] to for a middleware that compresses the responses
     instead. *)
 
-val with_encoded_body
-  :  ?algorithm:[ `Deflate | `Gzip ]
-  -> string
-  -> Dream.response
-  -> Dream.response
+val with_encoded_body :
+  ?algorithm:[ `Deflate | `Gzip ] -> string -> Dream.response -> Dream.response
 (** [with_encoded_body ?algorithm body response] replaces the body of the
     response with [body] compressed with [algorithm] and adds the corresponding
     [Content-Encoding] header.
 
     [algorithm] defaults to [`Deflate]. *)
 
-val accepted_encodings
-  :  'a Dream.message
-  -> [ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
-     list
-     option
+val accepted_encodings :
+  'a Dream.message ->
+  [ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ] list
+  option
 (** Retrieve the list of accepted encoding directives from the [Accept-Encoding]
     header, ordered by quality weight in decreasing order.
 
     If the request does not have an [Accept-Encoding] header, this returns
     [None]. *)
 
-val accepted_encodings_with_weights
-  :  'a Dream.message
-  -> ([ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
-     * int)
-     list
-     option
+val accepted_encodings_with_weights :
+  'a Dream.message ->
+  ([ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
+  * int)
+  list
+  option
 (** Same as [accepted_encoding], but returns the quality weights associated to
     the encoding directive. *)
 
-val content_encodings
-  :  'a Dream.message
-  -> [ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ]
-     list
-     option
+val content_encodings :
+  'a Dream.message ->
+  [ `Gzip | `Compress | `Deflate | `Identity | `Any | `Unknown of string ] list
+  option
 (** Retrieve the list of content encoding directives from the [Content-Encoding]
     header.
 

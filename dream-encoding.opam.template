@@ -1,8 +1,3 @@
 conflicts: [
   "result" {< "1.5"} # Might use result through lwt and explicitly uses Result.bind 
 ]
-pin-depends: [
-  ["dream.dev" "git+https://github.com/aantron/dream#master"]
-  ["dream-pure.dev" "git+https://github.com/aantron/dream#master"]
-  ["dream-httpaf.dev" "git+https://github.com/aantron/dream#master"]
-]

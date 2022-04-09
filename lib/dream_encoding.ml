@@ -15,10 +15,8 @@ let inflate_string_de str =
     Buffer.add_string r str
   in
   match De.Higher.uncompress ~w ~refill ~flush i o with
-  | Ok () ->
-    Ok (Buffer.contents r)
-  | Error _ as err ->
-    err
+  | Ok () -> Ok (Buffer.contents r)
+  | Error _ as err -> err
 
 let deflate_string_de str =
   let i = De.bigstring_create De.io_buffer_size in
@@ -58,10 +56,8 @@ let inflate_string_gz str =
     Buffer.add_string r str
   in
   match Gz.Higher.uncompress ~refill ~flush i o with
-  | Ok _ ->
-    Ok (Buffer.contents r)
-  | Error _ as err ->
-    err
+  | Ok _ -> Ok (Buffer.contents r)
+  | Error _ as err -> err
 
 let time () = Int32.of_float (Unix.gettimeofday ())
 
@@ -88,132 +84,103 @@ let deflate_string_gz ?(level = 4) str =
 
 let inflate_string ~algorithm str =
   match algorithm with
-  | `Deflate ->
-    inflate_string_de str
-  | `Gzip ->
-    inflate_string_gz str
+  | `Deflate -> inflate_string_de str
+  | `Gzip -> inflate_string_gz str
 
 let deflate_string ~algorithm str =
   match algorithm with
-  | `Deflate ->
-    deflate_string_de str
-  | `Gzip ->
-    deflate_string_gz str
+  | `Deflate -> deflate_string_de str
+  | `Gzip -> deflate_string_gz str
 
 let encoding_of_string = function
-  | "deflate" ->
-    `Deflate
-  | "gzip" ->
-    `Gzip
-  | s ->
-    `Unknown s
+  | "deflate" -> `Deflate
+  | "gzip" -> `Gzip
+  | s -> `Unknown s
 
 let content_encodings request =
   match Dream.header request "content-encoding" with
-  | None ->
-    None
+  | None -> None
   | Some s ->
-    String.split_on_char ',' s
-    |> List.map (fun x -> x |> String.trim |> String.lowercase_ascii)
-    |> List.map encoding_of_string
-    |> Option.some
+      String.split_on_char ',' s
+      |> List.map (fun x -> x |> String.trim |> String.lowercase_ascii)
+      |> List.map encoding_of_string
+      |> Option.some
 
 let accepted_encodings_with_weights request =
   match Dream.header request "accept-encoding" with
-  | None ->
-    None
+  | None -> None
   | Some s ->
-    let encodings = Accept.encodings (Some s) |> Accept.qsort in
-    Some
-      (List.map
-         (fun (a, b) ->
-           ( (match b with
-             | Accept.Any ->
-               `Any
-             | Accept.Gzip ->
-               `Gzip
-             | Accept.Compress ->
-               `Compress
-             | Accept.Deflate ->
-               `Deflate
-             | Accept.Identity ->
-               `Identity
-             | Accept.Encoding s ->
-               `Unknown s)
-           , a ))
-         encodings)
+      let encodings = Accept.encodings (Some s) |> Accept.qsort in
+      Some
+        (List.map
+           (fun (a, b) ->
+             ( (match b with
+               | Accept.Any -> `Any
+               | Accept.Gzip -> `Gzip
+               | Accept.Compress -> `Compress
+               | Accept.Deflate -> `Deflate
+               | Accept.Identity -> `Identity
+               | Accept.Encoding s -> `Unknown s),
+               a ))
+           encodings)
 
 let accepted_encodings request =
   match accepted_encodings_with_weights request with
-  | None ->
-    None
-  | Some encodings ->
-    Some (List.map (fun (a, _) -> a) encodings)
+  | None -> None
+  | Some encodings -> Some (List.map (fun (a, _) -> a) encodings)
 
 let preferred_content_encoding request =
   match accepted_encodings request with
-  | None ->
-    None
+  | None -> None
   | Some l ->
-    let rec aux = function
-      | [] ->
-        None
-      | `Any :: _rest ->
-        Some `Gzip
-      | `Deflate :: _rest ->
-        Some `Deflate
-      | `Gzip :: _rest ->
-        Some `Gzip
-      | _ :: rest ->
-        aux rest
-    in
-    aux l
+      let rec aux = function
+        | [] -> None
+        | `Any :: _rest -> Some `Gzip
+        | `Deflate :: _rest -> Some `Deflate
+        | `Gzip :: _rest -> Some `Gzip
+        | _ :: rest -> aux rest
+      in
+      aux l
 
 let algorithm_to_string = function `Deflate -> "deflate" | `Gzip -> "gzip"
 
 let with_encoded_body ?(algorithm = `Deflate) body response =
   match body with
-  | "" ->
-    response
+  | "" -> response
   | _ ->
-    let encoded_body = deflate_string ~algorithm body in
-    Dream.set_body response encoded_body;
-    Dream.set_header response "Content-Encoding" (algorithm_to_string algorithm);
-    response
+      let encoded_body = deflate_string ~algorithm body in
+      Dream.set_body response encoded_body;
+      Dream.set_header response "Content-Encoding"
+        (algorithm_to_string algorithm);
+      response
 
 let compress handler req =
   let%lwt response = handler req in
   let preferred_algorithm = preferred_content_encoding req in
   match preferred_algorithm with
-  | None ->
-    Lwt.return response
+  | None -> Lwt.return response
   | Some algorithm ->
-    Dream.log
-      "Compressing request with algorithm: %s"
-      (algorithm_to_string algorithm);
-    let%lwt body = Dream.body response in
-    Lwt.return @@ with_encoded_body ~algorithm body response
+      Dream.log "Compressing request with algorithm: %s"
+        (algorithm_to_string algorithm);
+      let%lwt body = Dream.body response in
+      Lwt.return @@ with_encoded_body ~algorithm body response
 
 let decompress handler req =
   let rec aux algorithms content =
     match algorithms with
-    | [] ->
-      Ok content
+    | [] -> Ok content
     | (`Deflate as el) :: rest | (`Gzip as el) :: rest ->
-      Result.bind (inflate_string ~algorithm:el content) (aux rest)
-    | _ :: _rest ->
-      Error (`Msg "Unsopported encoding directive")
+        Result.bind (inflate_string ~algorithm:el content) (aux rest)
+    | _ :: _rest -> Error (`Msg "Unsopported encoding directive")
   in
   let algorithms = content_encodings req in
   match algorithms with
-  | None ->
-    handler req
-  | Some algorithms ->
-    let%lwt body = Dream.body req in
-    let body = aux algorithms body in
-    (match body with
-    | Ok body ->
-      Dream.set_body req body;
-      handler req
-    | Error (`Msg err) ->
-      Dream.respond ~status:`Unsupported_Media_Type err)
+  | None -> handler req
+  | Some algorithms -> (
+      let%lwt body = Dream.body req in
+      let body = aux algorithms body in
+      match body with
+      | Ok body ->
+          Dream.set_body req body;
+          handler req
+      | Error (`Msg err) -> Dream.respond ~status:`Unsupported_Media_Type err)

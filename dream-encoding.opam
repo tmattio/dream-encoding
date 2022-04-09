@@ -9,9 +9,9 @@ homepage: "https://github.com/tmattio/dream-encoding"
 doc: "https://tmattio.github.io/dream-encoding/"
 bug-reports: "https://github.com/tmattio/dream-encoding/issues"
 depends: [
-  "ocaml" {>= "4.08.0"}
   "dune" {>= "2.7"}
-  "dream"
+  "ocaml" {>= "4.08.0"}
+  "dream" {>= "1.0.0~alpha3"}
   "decompress" {>= "1.4.1"}
   "lwt_ppx"
   "odoc" {with-doc}
@@ -33,9 +33,4 @@ build: [
 dev-repo: "git+https://github.com/tmattio/dream-encoding.git"
 conflicts: [
   "result" {< "1.5"} # Might use result through lwt and explicitly uses Result.bind 
-]
-pin-depends: [
-  ["dream.dev" "git+https://github.com/aantron/dream#master"]
-  ["dream-pure.dev" "git+https://github.com/aantron/dream#master"]
-  ["dream-httpaf.dev" "git+https://github.com/aantron/dream#master"]
 ]

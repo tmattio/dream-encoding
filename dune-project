@@ -22,9 +22,8 @@
  (depends
   (ocaml
    (>= 4.08.0))
-  dune
-  dream
+  (dream
+   (>= 1.0.0~alpha3))
   (decompress
    (>= 1.4.1))
-  lwt_ppx
-  (odoc :with-doc)))
+  lwt_ppx))

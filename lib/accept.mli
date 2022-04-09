@@ -26,18 +26,16 @@ type encoding =
 
 (** Accept-Encoding HTTP header parsing and generation *)
 
+type q = int
 (** Qualities are integers between 0 and 1000. A header with ["q=0.7"]
     corresponds to a quality of [700]. *)
-type q = int
 
-(** Lists, annotated with qualities. *)
 type 'a qlist = (q * 'a) list
+(** Lists, annotated with qualities. *)
 
 val qsort : 'a qlist -> 'a qlist
 (** Sort by quality, biggest first. Respect the initial ordering. *)
 
 val encodings : string option -> encoding qlist
-
 val string_of_encoding : ?q:q -> encoding -> string
-
 val string_of_encodings : encoding qlist -> string
