@@ -154,14 +154,17 @@ let with_encoded_body ?(algorithm = `Deflate) body response =
         (algorithm_to_string algorithm);
       response
 
+let log = Dream.sub_log "dream.encoding"
+
 let compress handler req =
   let%lwt response = handler req in
   let preferred_algorithm = preferred_content_encoding req in
   match preferred_algorithm with
   | None -> Lwt.return response
   | Some algorithm ->
-      Dream.log "Compressing request with algorithm: %s"
-        (algorithm_to_string algorithm);
+      log.debug (fun log ->
+          log "Compressing request with algorithm: %s"
+            (algorithm_to_string algorithm));
       let%lwt body = Dream.body response in
       Lwt.return @@ with_encoded_body ~algorithm body response
 
