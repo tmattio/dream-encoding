@@ -127,7 +127,9 @@ let accepted_encodings_with_weights request =
 let accepted_encodings request =
   match accepted_encodings_with_weights request with
   | None -> None
-  | Some encodings -> Some (List.map (fun (a, _) -> a) encodings)
+  | Some encodings ->
+      Some
+        (List.filter_map (function _, 0 -> None | a, _ -> Some a) encodings)
 
 let preferred_content_encoding request =
   match accepted_encodings request with
